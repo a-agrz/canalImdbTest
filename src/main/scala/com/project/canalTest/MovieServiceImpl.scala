@@ -3,11 +3,12 @@ package com.project.canalTest
 import akka.actor.ActorSystem
 import akka.stream.{ActorMaterializer, IOResult, Materializer}
 import akka.stream.alpakka.csv.scaladsl.{CsvParsing, CsvToMap}
-import akka.stream.scaladsl.{FileIO, Source}
+import akka.stream.scaladsl.{FileIO, Sink, Source}
 import com.project.canalTest.Schema.{Principal, Title, TitleActor, TvSeries}
 
 import java.nio.file.Paths
-import scala.concurrent.Future
+import scala.concurrent.duration.DurationInt
+import scala.concurrent.{Await, Future}
 import scala.util.Try
 
 trait MovieService {
@@ -23,7 +24,7 @@ object MovieServiceImpl extends MovieService {
   val nameBasicsFile = "src/main/ressources/name.basics.test.tsv" //"src/main/ressources/name.basics.tsv"
   val titleBasicsFile = "src/main/ressources/title.basics.test.tsv" //"src/main/ressources/title.basics.tsv"
   val titlePrincipalsFile = "src/main/ressources/title.principals.test.tsv" //"src/main/ressources/title.principals.tsv"
-  val titleEpisodesFile = "src/main/ressources/title.principals.test.tsv" //"src/main/ressources/title.principals.tsv"
+  val titleEpisodesFile = "src/main/ressources/title.episode.test.tsv" //"src/main/ressources/title.episode.tsv"
 
   override def principalsForMovieName(name: String): Source[Schema.Principal, _] = {
 
@@ -76,24 +77,26 @@ object MovieServiceImpl extends MovieService {
   }
 
   override def tvSeriesWithGreatestNumberOfEpisodes(): Source[TvSeries, _] = {
+    val size = 2
     lazy val tvSeries: Source[TvSeries, _] = tsvSource(titleBasicsFile)
-      .filter(x => x.getOrElse("titleType","") == "tvseries")
+      .filter(x => x.getOrElse("titleType", "") == "tvseries")
       .map(x =>
         TvSeries(
           x.getOrElse("tconst", ""),
-          x.getOrElse("original", ""),
+          x.getOrElse("originalTitle", ""),
           x.get("startYear").flatMap(x => Try(x.toInt).toOption),
           x.get("endYear").flatMap(x => Try(x.toInt).toOption),
-          x.getOrElse("genre", "").split(",").toList
+          x.getOrElse("genres", "").split(",").toList
         ))
-
+    //.map { elem => println(elem); elem}
+    //Await.result(tvSeries.runWith(Sink.foreach(println)), 180.seconds)
     tsvSource(titleEpisodesFile)
-      .map(x => x.getOrElse("parentTcount", "") -> 1)
+      .map(x => x.getOrElse("parentTconst", "") -> 1)
       .groupBy(8, x => x._1)
       .reduce((x, y) => (x._1, x._2 + y._2))
       .mergeSubstreams
       .fold(Seq.empty[(String, Int)]) {
-        case (acc, e) if acc.length < 3 => acc ++ Seq(e)
+        case (acc, e) if acc.length < size => acc ++ Seq(e)
         case (acc, e) if !acc.filter(_._2 < e._2).isEmpty => acc.sortBy(_._2).tail ++ Seq(e)
         case (acc, e) => acc
       }

@@ -45,7 +45,8 @@ class MovieServiceSpec extends AnyFlatSpec with Logging  {
     logger.info("Testing tvSeriesWithGreatestNumberOfEpisodes method with specific input")
     val result = MovieServiceImpl.tvSeriesWithGreatestNumberOfEpisodes().runWith(Sink.seq)
     val expected = Seq(TvSeries("tt0000001", "Carmencita", Some(1894), None, List("Documentary", "Short")),
-      TvSeries("tt0000002", "Le clown et ses chiens", Some(1892), None, List("Animation", "Short"))
+      TvSeries("tt0000002", "Le clown et ses chiens", Some(1892), None, List("Animation", "Short")),
+      //TvSeries("tt0000003","Pauvre Pierrot",Some(1892),None,List("Animation", "Comedy", "Romance"))
 
     )
     assert(Await.result(result, 3.seconds) == expected)
