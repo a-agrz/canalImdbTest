@@ -20,15 +20,15 @@ class MovieServiceSpec extends AnyFlatSpec with Logging  {
 
   "principalsForMovieName" should "return a Source of Principal objects" in {
     logger.info("Testing principalsForMovieName method")
-    val result = MovieServiceImpl.principalsForMovieName("Le clown et ses chiens")
+    val result = MovieServiceImpl.principalsForMovieName("Carmencita")
     assert(result.isInstanceOf[Source[Schema.Principal, _]])
   }
 
   it should "return the correct Principal object" in {
    logger.info("Testing principalsForMovieName method with specific input")
-    val result = MovieServiceImpl.principalsForMovieName("Le clown et ses chiens").runWith(Sink.seq)
+    val result = MovieServiceImpl.principalsForMovieName("Carmencita").runWith(Sink.collection)
     val expected = Seq(Schema.Principal("nm0000001", "Fred Astaire", Some(1899), Some(1987), List("soundtrack", "actor", "miscellaneous")),
-                      Schema.Principal("nm0000002", "Lauren Bacall", Some(1899), Some(2014), List("actress","soundtrack")),
+                      Schema.Principal("nm0000002", "Lauren Bacall", Some(1924), Some(2014), List("actress","soundtrack")),
                       Schema.Principal("nm0000003", "Brigitte Bardot", Some(1934), None, List("actress","soundtrack","music_department")),
     )
     assert(Await.result(result, 3.seconds) == expected)
