@@ -93,7 +93,7 @@ object MovieServiceImpl extends MovieService {
       .reduce((x, y) => (x._1, x._2 + y._2))
       .mergeSubstreams
       .fold(Seq.empty[(String, Int)]) {
-        case (acc, e) if acc.length < 10 => acc ++ Seq(e)
+        case (acc, e) if acc.length < 3 => acc ++ Seq(e)
         case (acc, e) if !acc.filter(_._2 < e._2).isEmpty => acc.sortBy(_._2).tail ++ Seq(e)
         case (acc, e) => acc
       }
